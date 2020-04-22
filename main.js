@@ -77,22 +77,33 @@ const getCsv = async function (url, filePath) {
 };
 
 const genContacts = function (srcPath) {
+  let data = fs.readFileSync(srcPath);
+  let obj = JSON.parse(data);
+  let updateDate = moment(obj["最終更新"]);
+  let table = obj.body;
+  let dailylist = {};
+  for (let r of table) {
+    let p = parseInt(r["相談件数"]);
+    if (isNaN(p)) {
+      p = 0;
+    }
+    dailylist[r["受付_年月日"]] = p;
+  }
+
+  datas = [];
+  for (
+    var target = dateFrom.clone();
+    target.isBefore(moment.now());
+    target.add(1, "days")
+  ) {
+    let key = target.format("YYYY-MM-DD");
+    let val = dailylist[key] || 0;
+    datas.push({"日付":target.toISOString(),"小計":val});
+  }
   return {
     contacts: {
-      date: "2020/04/17 10:00",
-      data: [
-        {
-          日付: "2020-02-07T00:00:00Z",
-          曜日: "金",
-          "9-13時": 0,
-          "13-17時": 0,
-          "17-21時": 26,
-          date: "2020-02-07",
-          w: 5,
-          short_date: "02/07",
-          小計: 26,
-        },
-      ],
+      date: updateDate.format("YYYY/MM/DD HH:mm"),//"2020/04/17 10:00",
+      data: datas
     },
   };
 };
@@ -364,8 +375,8 @@ const genInspectorSummary2 = function (InspectioSrcPath, NegativeSrcPath) {
       let ii = insList[key] || 0;
       let ng = negList[key] || 0;
 
-      ii=parseInt(ii);
-      ng=parseInt(ng);
+      ii = parseInt(ii);
+      ng = parseInt(ng);
 
       il.push(ii);
       pl.push(ii - ng);
@@ -386,10 +397,10 @@ const genInspectorSummary2 = function (InspectioSrcPath, NegativeSrcPath) {
 };
 
 const main = async function () {
-  await getCsv(patientsSite,data1);
-  await getCsv(screendSite,data2);
-  await getCsv(hotlineSite,data3);
-  await getCsv(negatibSite,data4);
+  await getCsv(patientsSite, data1);
+  await getCsv(screendSite, data2);
+  await getCsv(hotlineSite, data3);
+  await getCsv(negatibSite, data4);
 
   //await getCsv(kikokusyasessyokusyaSite,data4);
   //await getCsv(totalparsonsSite,data5);
@@ -414,8 +425,8 @@ const main = async function () {
 
   fs.writeFileSync(
     inspectResultPath,
-     JSON.stringify(res2, null, 1).replace(/\//g, "\\/")
-     );
+    JSON.stringify(res2, null, 1).replace(/\//g, "\\/")
+  );
 };
 
 main();
