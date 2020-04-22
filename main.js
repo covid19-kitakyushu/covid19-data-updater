@@ -4,6 +4,7 @@ const csv = require("csvtojson");
 const { JSDOM } = require("jsdom");
 const request = require("request-promise");
 const moment = require("moment");
+const Parser = require("rss-parser");
 
 patientsSite =
   "https://ckan.open-governmentdata.org/dataset/401005_kitakyushu_covid19_patients";
@@ -17,6 +18,7 @@ negatibSite =
 //  "https://ckan.open-governmentdata.org/dataset/401307_covid19_kikokusyasessyokusya";
 //totalparsonsSite =
 //  "https://ckan.open-governmentdata.org/dataset/401307_covid19_totalpatients";
+newsRss = "https://www.city.kitakyushu.lg.jp/soumu/covid-19.rdf";
 
 const data1 = "patients.json";
 const data2 = "test_count.json";
@@ -25,6 +27,7 @@ const data4 = "confirm_negative.json";
 const data5 = "data500.json";
 const resultPath = "data.json";
 const inspectResultPath = "inspections_summary.json";
+const newsResultPath = "news.json";
 
 const dateFrom = new moment("2020-01-24");
 
@@ -98,12 +101,12 @@ const genContacts = function (srcPath) {
   ) {
     let key = target.format("YYYY-MM-DD");
     let val = dailylist[key] || 0;
-    datas.push({"日付":target.toISOString(),"小計":val});
+    datas.push({ 日付: target.toISOString(), 小計: val });
   }
   return {
     contacts: {
-      date: updateDate.format("YYYY/MM/DD HH:mm"),//"2020/04/17 10:00",
-      data: datas
+      date: updateDate.format("YYYY/MM/DD HH:mm"), //"2020/04/17 10:00",
+      data: datas,
     },
   };
 };
@@ -397,10 +400,10 @@ const genInspectorSummary2 = function (InspectioSrcPath, NegativeSrcPath) {
 };
 
 const main = async function () {
-  await getCsv(patientsSite, data1);
-  await getCsv(screendSite, data2);
-  await getCsv(hotlineSite, data3);
-  await getCsv(negatibSite, data4);
+  //await getCsv(patientsSite, data1);
+  //await getCsv(screendSite, data2);
+  //await getCsv(hotlineSite, data3);
+  //await getCsv(negatibSite, data4);
 
   //await getCsv(kikokusyasessyokusyaSite,data4);
   //await getCsv(totalparsonsSite,data5);
@@ -426,6 +429,26 @@ const main = async function () {
   fs.writeFileSync(
     inspectResultPath,
     JSON.stringify(res2, null, 1).replace(/\//g, "\\/")
+  );
+
+  //get rss gen news.json
+  let parser = new Parser();
+  let news = [];
+  let cnt = 0;
+  const rss = await parser.parseURL(newsRss);
+  rss.items.forEach((item) => {
+    if (cnt++ < 5) {
+      news.push({
+        date: moment(item.isoDate).format("YYYY/MM/DD"),
+        url: item.link,
+        text: item.title,
+      });
+    }
+  });
+
+  fs.writeFileSync(
+    newsResultPath,
+    JSON.stringify({ newsItems: news }, null, 1).replace(/\//g, "\\/")
   );
 };
 
