@@ -294,7 +294,7 @@ const genMainSummary = function (patientSrcPath, InspectioSrcPath) {
   }
 
   return {
-    lastUpdate: lastUpdate,
+    lastUpdate: lastUpdate.format("YYYY/MM/DD HH:mm"), //"2020/04/17 11:00",
     main_summary: {
       attr: "検査実施人数",
       value: insCnt,
