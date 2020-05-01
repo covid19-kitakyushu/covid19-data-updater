@@ -87,10 +87,11 @@ const genContacts = function (srcPath) {
   let dailylist = {};
   for (let r of table) {
     let p = parseInt(r["相談件数"]);
+    key = moment(r["受付_年月日"]).format("YYYY/MM/DD");
     if (isNaN(p)) {
       p = 0;
     }
-    dailylist[r["受付_年月日"]] = p;
+    dailylist[key] = p;
   }
 
   datas = [];
@@ -99,7 +100,7 @@ const genContacts = function (srcPath) {
     target.isBefore(moment.now());
     target.add(1, "days")
   ) {
-    let key = target.format("YYYY-MM-DD");
+    let key = target.format("YYYY/MM/DD");
     let val = dailylist[key] || 0;
     datas.push({ 日付: target.toISOString(), 小計: val });
   }
@@ -139,7 +140,7 @@ const genPatients = function (srcPath) {
     let date = moment(r["公表_年月日"]);
     let d = {
       リリース日: date.toISOString(), //"2020-04-15T00:04:00.000Z",
-      居住地: r["市区町村名"],
+      居住地: r["患者_居住地"].replace("福岡県北九州市",''),
       年代: r["患者_年代"],
       性別: r["患者_性別"],
       退院: r["患者_退院済フラグ"] == "1" ? "○" : "",
@@ -209,10 +210,11 @@ const genInspectionsSummary = function (srcPath) {
   let dailylist = {};
   for (let r of table) {
     let p = parseInt(r["検査実施_件数"]);
+    key = moment(r["実施_年月日"]).format("YYYY/MM/DD");
     if (isNaN(p)) {
       p = 0;
     }
-    dailylist[r["実施_年月日"]] = p;
+    dailylist[key] = p;
   }
 
   datas = [];
@@ -222,7 +224,7 @@ const genInspectionsSummary = function (srcPath) {
     target.isBefore(moment.now());
     target.add(1, "days")
   ) {
-    let key = target.format("YYYY-MM-DD");
+    let key = target.format("YYYY/MM/DD");
     let val = dailylist[key] || 0;
     labels.push(target.format("M/D"));
     datas.push(val);
@@ -344,10 +346,11 @@ const genInspectorSummary2 = function (InspectioSrcPath, NegativeSrcPath) {
     let table = obj.body;
     for (let r of table) {
       let p = parseInt(r["検査実施_件数"]);
-      if (isNaN(p)) {
+      key = moment(r["実施_年月日"]).format("YYYY/MM/DD");
+    if (isNaN(p)) {
         p = 0;
       }
-      insList[r["実施_年月日"]] = p;
+      insList[key] = p;
     }
   }
   {
@@ -357,10 +360,11 @@ const genInspectorSummary2 = function (InspectioSrcPath, NegativeSrcPath) {
     let table = obj.body;
     for (let r of table) {
       let p = parseInt(r["陰性確認_件数"]);
+      key = moment(r["完了_年月日"]).format("YYYY/MM/DD");
       if (isNaN(p)) {
         p = 0;
       }
-      negList[r["完了_年月日"]] = p;
+      negList[key] = p;
     }
   }
 
@@ -373,7 +377,7 @@ const genInspectorSummary2 = function (InspectioSrcPath, NegativeSrcPath) {
     target.isBefore(moment.now());
     target.add(1, "days")
   ) {
-    let key = target.format("YYYY-MM-DD");
+    let key = target.format("YYYY/MM/DD");
     try {
       let ii = insList[key] || 0;
       let ng = negList[key] || 0;
@@ -400,10 +404,10 @@ const genInspectorSummary2 = function (InspectioSrcPath, NegativeSrcPath) {
 };
 
 const main = async function () {
-  //await getCsv(patientsSite, data1);
-  //await getCsv(screendSite, data2);
-  //await getCsv(hotlineSite, data3);
-  //await getCsv(negatibSite, data4);
+  await getCsv(patientsSite, data1);
+  await getCsv(screendSite, data2);
+  await getCsv(hotlineSite, data3);
+  await getCsv(negatibSite, data4);
 
   //await getCsv(kikokusyasessyokusyaSite,data4);
   //await getCsv(totalparsonsSite,data5);
