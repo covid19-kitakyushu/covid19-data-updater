@@ -436,6 +436,7 @@ const main = async function () {
   );
 
   //get rss gen news.json
+  /*
   let parser = new Parser();
   let news = [];
   let cnt = 0;
@@ -454,6 +455,7 @@ const main = async function () {
     newsResultPath,
     JSON.stringify({ newsItems: news }, null, 1).replace(/\//g, "\\/")
   );
+  */
 };
 
 main();
