@@ -4,6 +4,8 @@ const csv = require("csvtojson");
 const { JSDOM } = require("jsdom");
 const request = require("request-promise");
 const moment = require("moment");
+require('moment-timezone');
+moment.tz.setDefault('Asia/Tokyo');
 const Parser = require("rss-parser");
 
 patientsSite =
