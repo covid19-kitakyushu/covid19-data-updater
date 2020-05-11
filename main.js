@@ -26,10 +26,10 @@ const data1 = "patients.json";
 const data2 = "test_count.json";
 const data3 = "call_center.json";
 const data4 = "confirm_negative.json";
-const data5 = "data500.json";
+//const data5 = "data500.json";
 const resultPath = "data.json";
 const inspectResultPath = "inspections_summary.json";
-const newsResultPath = "news.json";
+//const newsResultPath = "news.json";
 
 const dateFrom = new moment("2020-01-24");
 
@@ -135,7 +135,7 @@ const genQuerents = function (srcPath) {
 const genPatients = function (srcPath) {
   let data = fs.readFileSync(srcPath);
   let obj = JSON.parse(data);
-  let updateDate = moment(obj["最終更新"]);
+  let updateDate = moment();//moment(obj["最終更新"]);
   let table = obj.body;
   let datas = [];
   for (let r of table) {
@@ -160,7 +160,6 @@ const genPatients = function (srcPath) {
 const genPatientsSummary = function (srcPath) {
   let data = fs.readFileSync(srcPath);
   let obj = JSON.parse(data);
-  let updateDate = moment(obj["最終更新"]);
   let table = obj.body;
 
   let sum = {};
@@ -186,7 +185,7 @@ const genPatientsSummary = function (srcPath) {
 
   return {
     patients_summary: {
-      date: updateDate.format("YYYY/MM/DD HH:mm"), //"2020/04/17 21:00",
+      date: moment().format("YYYY/MM/DD HH:mm"), //"2020/04/17 21:00",
       data: datas,
     },
   };
@@ -207,7 +206,6 @@ const genDischargesSummary = function (srcPath) {
 const genInspectionsSummary = function (srcPath) {
   let data = fs.readFileSync(srcPath);
   let obj = JSON.parse(data);
-  let updateDate = moment(obj["最終更新"]);
   let table = obj.body;
   let dailylist = {};
   for (let r of table) {
@@ -234,7 +232,7 @@ const genInspectionsSummary = function (srcPath) {
 
   return {
     inspections_summary: {
-      date: updateDate.format("YYYY/MM/DD HH:mm"), //"2020/04/17 11:00",
+      date: moment().format("YYYY/MM/DD HH:mm"), //"2020/04/17 11:00",
       data: {
         市内: datas,
       },
@@ -259,11 +257,9 @@ const genInspectionPersons = function (srcPath) {
 };
 const genMainSummary = function (patientSrcPath, InspectioSrcPath) {
   let insCnt = 0;
-  let lastUpdate;
   {
     let data = fs.readFileSync(InspectioSrcPath);
     let obj = JSON.parse(data);
-    lastUpdate = moment(obj["最終更新"]);
     let table = obj.body;
     for (r of table) {
       insCnt += parseInt(r["検査実施_件数"]);
@@ -298,7 +294,7 @@ const genMainSummary = function (patientSrcPath, InspectioSrcPath) {
   }
 
   return {
-    lastUpdate: lastUpdate.format("YYYY/MM/DD HH:mm"), //"2020/04/17 11:00",
+    lastUpdate: moment().format("YYYY/MM/DD HH:mm"), //"2020/04/17 11:00",
     main_summary: {
       attr: "検査実施人数",
       value: insCnt,
@@ -344,7 +340,6 @@ const genInspectorSummary2 = function (InspectioSrcPath, NegativeSrcPath) {
   {
     let data = fs.readFileSync(InspectioSrcPath);
     let obj = JSON.parse(data);
-    insUpdate = moment(obj["最終更新"]);
     let table = obj.body;
     for (let r of table) {
       let p = parseInt(r["検査実施_件数"]);
@@ -358,7 +353,6 @@ const genInspectorSummary2 = function (InspectioSrcPath, NegativeSrcPath) {
   {
     let data = fs.readFileSync(NegativeSrcPath);
     let obj = JSON.parse(data);
-    negUpdate = moment(obj["最終更新"]);
     let table = obj.body;
     for (let r of table) {
       let p = parseInt(r["陰性確認_件数"]);
@@ -373,7 +367,6 @@ const genInspectorSummary2 = function (InspectioSrcPath, NegativeSrcPath) {
   let il = [];
   let pl = [];
   let labels = [];
-  let dn = negUpdate > insUpdate ? negUpdate : insUpdate;
   for (
     var target = dateFrom.clone();
     target.isBefore(moment.now());
@@ -401,7 +394,7 @@ const genInspectorSummary2 = function (InspectioSrcPath, NegativeSrcPath) {
       陽性確認: pl,
     },
     labels: labels,
-    last_update: dn.format("YYYY/MM/DD HH:mm"), //"2020/04/17 21:00",
+    last_update: moment().format("YYYY/MM/DD HH:mm"), //"2020/04/17 21:00",
   };
 };
 
@@ -436,7 +429,7 @@ const main = async function () {
     inspectResultPath,
     JSON.stringify(res2, null, 1).replace(/\//g, "\\/")
   );
-
+/*
   //get rss gen news.json
   let parser = new Parser();
   let news = [];
@@ -456,6 +449,7 @@ const main = async function () {
     newsResultPath,
     JSON.stringify({ newsItems: news }, null, 1).replace(/\//g, "\\/")
   );
+*/
 };
 
 main();
