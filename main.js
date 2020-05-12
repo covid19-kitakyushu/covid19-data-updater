@@ -84,6 +84,8 @@ const getCsv = async function (url, filePath) {
 const genContacts = function (srcPath) {
   let data = fs.readFileSync(srcPath);
   let obj = JSON.parse(data);
+  let updateDate = moment(obj["最終更新"]);
+  let latestDate;
   let table = obj.body;
   let dailylist = {};
   for (let r of table) {
@@ -93,21 +95,22 @@ const genContacts = function (srcPath) {
       p = 0;
     }
     dailylist[key] = p;
+    latestDate = key;
   }
-
   datas = [];
   for (
     var target = dateFrom.clone();
-    target.isBefore(moment.now());
+    target.isBefore(moment(latestDate, "YYYY/MM/DD").add(1,"days"));
     target.add(1, "days")
   ) {
     let key = target.format("YYYY/MM/DD");
+    console.log(key)
     let val = dailylist[key] || 0;
-    datas.push({ 日付: target.toISOString(), 小計: val });
+    datas.push({ 日付: moment(key).add(9,'h').toISOString(), 小計: val });
   }
   return {
     contacts: {
-      date: moment().format("YYYY/MM/DD HH:mm"), //"2020/04/17 10:00",
+      date: updateDate.format("YYYY/MM/DD HH:mm"), //"2020/04/17 10:00",
       data: datas,
     },
   };
@@ -336,9 +339,12 @@ const genInspectorSummary2 = function (InspectioSrcPath, NegativeSrcPath) {
   let negList = {};
   let insUpdate;
   let negUpdate;
+  let insKey;
+  let negKey;
   {
     let data = fs.readFileSync(InspectioSrcPath);
     let obj = JSON.parse(data);
+    insUpdate = moment(obj["最終更新"]);
     let table = obj.body;
     for (let r of table) {
       let p = parseInt(r["検査実施_件数"]);
@@ -347,11 +353,13 @@ const genInspectorSummary2 = function (InspectioSrcPath, NegativeSrcPath) {
         p = 0;
       }
       insList[key] = p;
+      insKey = key;
     }
   }
   {
     let data = fs.readFileSync(NegativeSrcPath);
     let obj = JSON.parse(data);
+    negUpdate = moment(obj["最終更新"]);
     let table = obj.body;
     for (let r of table) {
       let p = parseInt(r["陰性確認_件数"]);
@@ -360,15 +368,18 @@ const genInspectorSummary2 = function (InspectioSrcPath, NegativeSrcPath) {
         p = 0;
       }
       negList[key] = p;
+      negKey = key;
     }
   }
 
   let il = [];
   let pl = [];
   let labels = [];
+  let dn = negUpdate > insUpdate ? negUpdate : insUpdate;
+  let newestKey = negKey > insKey ? negKey : insKey;
   for (
     var target = dateFrom.clone();
-    target.isBefore(moment.now());
+    target.isBefore(moment(newestKey, "YYYY/MM/DD").add(1,"days"));
     target.add(1, "days")
   ) {
     let key = target.format("YYYY/MM/DD");
@@ -393,7 +404,7 @@ const genInspectorSummary2 = function (InspectioSrcPath, NegativeSrcPath) {
       陽性確認: pl,
     },
     labels: labels,
-    last_update: moment().format("YYYY/MM/DD HH:mm"), //"2020/04/17 21:00",
+    last_update: dn.format("YYYY/MM/DD HH:mm"), //"2020/04/17 21:00",
   };
 };
 
