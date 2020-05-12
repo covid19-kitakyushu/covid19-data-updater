@@ -84,7 +84,7 @@ const getCsv = async function (url, filePath) {
 const genContacts = function (srcPath) {
   let data = fs.readFileSync(srcPath);
   let obj = JSON.parse(data);
-  let updateDate = moment(obj["最終更新"]);
+  let updateDate = moment()//moment(obj["最終更新"]);
   let latestDate;
   let table = obj.body;
   let dailylist = {};
@@ -104,7 +104,6 @@ const genContacts = function (srcPath) {
     target.add(1, "days")
   ) {
     let key = target.format("YYYY/MM/DD");
-    console.log(key)
     let val = dailylist[key] || 0;
     datas.push({ 日付: moment(key).add(9,'h').toISOString(), 小計: val });
   }
