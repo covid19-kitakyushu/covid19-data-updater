@@ -374,7 +374,7 @@ const genInspectorSummary2 = function (InspectioSrcPath, NegativeSrcPath) {
   let il = [];
   let pl = [];
   let labels = [];
-  let dn = negUpdate > insUpdate ? negUpdate : insUpdate;
+  let dn = moment();//negUpdate > insUpdate ? negUpdate : insUpdate;
   let newestKey = negKey > insKey ? negKey : insKey;
   for (
     var target = dateFrom.clone();
