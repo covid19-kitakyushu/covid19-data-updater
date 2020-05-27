@@ -175,7 +175,7 @@ const genPatientsSummary = function (srcPath) {
   let datas = [];
   for (
     var target = dateFrom.clone();
-    target.isBefore(moment.now());
+    target.isBefore(moment().subtract(1,'d'));
     target.add(1, "days")
   ) {
     datas.push({
