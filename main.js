@@ -3,8 +3,9 @@ const fs = require("fs");
 const csv = require("csvtojson");
 const { JSDOM } = require("jsdom");
 const request = require("request-promise");
-const moment = require("moment");
-require('moment-timezone');
+//const moment = require("moment");
+//require('moment-timezone');
+const moment = require('moment-timezone');
 moment.tz.setDefault('Asia/Tokyo');
 const Parser = require("rss-parser");
 
@@ -90,7 +91,7 @@ const genContacts = function (srcPath) {
   let dailylist = {};
   for (let r of table) {
     let p = parseInt(r["相談件数"]);
-    key = moment(r["受付_年月日"]).format("YYYY/MM/DD");
+    key = moment(r["受付_年月日"], "YYYY/M/D").format("YYYY/MM/DD");
     if (isNaN(p)) {
       p = 0;
     }
@@ -105,7 +106,7 @@ const genContacts = function (srcPath) {
   ) {
     let key = target.format("YYYY/MM/DD");
     let val = dailylist[key] || 0;
-    datas.push({ 日付: moment(key).add(9,'h').toISOString(), 小計: val });
+    datas.push({ 日付: moment(key, "YYYY/MM/DD").tz("Asia/Tokyo").add(9,"h").format(), 小計: val });
   }
   return {
     contacts: {
@@ -211,7 +212,7 @@ const genInspectionsSummary = function (srcPath) {
   let dailylist = {};
   for (let r of table) {
     let p = parseInt(r["検査実施_件数"]);
-    key = moment(r["実施_年月日"]).format("YYYY/MM/DD");
+    key = moment(r["実施_年月日"], "YYYY/M/D").format("YYYY/MM/DD");
     if (isNaN(p)) {
       p = 0;
     }
@@ -272,25 +273,49 @@ const genMainSummary = function (patientSrcPath, InspectioSrcPath) {
 
   let posall = table.length;
   let nyuuinn = 0;
+  let mushojo = 0;
   let keisyou = 0;
   let juusyou = 0;
+  let jitaku = 0;
   let taiinn = 0;
   let sibou = 0;
+  let confirming = 0;
+  let tbs = 0; //調整中
   for (const p of table) {
     switch (p["患者_状態"]) {
       case "入院中":
+        nyuuinn++;
+        switch (p["患者_症状"]) {
+          case "無症状":
+            mushojo++;
+            break;
+          case "軽症":
+          case "中症":
+            keisyou++;
+            break;
+          case "重症":
+          case "意識なし":
+            juusyou++;
+            break;
+          default:
+            confirming++;
+            break;
+        }
+        break;
       case "自宅待機中":
       case "入院先調整中":
-        nyuuinn++;
+        jitaku++;
         break;
       case "退院":
+      case "健康観察終了":
         taiinn++;
         break;
       case "死亡":
         sibou++;
         break;
-    }
-    switch (p["患者_症状"]) {
+      default:
+        tbs++;
+        break;
     }
   }
 
@@ -309,22 +334,38 @@ const genMainSummary = function (patientSrcPath, InspectioSrcPath) {
               value: nyuuinn,
               children: [
                 {
+                  attr: "無症状",
+                  value: mushojo,
+                },
+                {
                   attr: "軽症・中等症",
-                  value: 0,
+                  value: keisyou,
                 },
                 {
                   attr: "重症",
-                  value: 0,
+                  value: juusyou,
+                },
+                {
+                  attr: "確認中",
+                  value: confirming,
                 },
               ],
             },
             {
-              attr: "退院",
-              value: taiinn,
+              attr: "自宅療養",
+              value: jitaku,
+            },
+            {
+              attr: "調整中",
+              value: tbs,
             },
             {
               attr: "死亡",
               value: sibou,
+            },
+            {
+              attr: "退院",
+              value: taiinn,
             },
           ],
         },
@@ -347,7 +388,7 @@ const genInspectorSummary2 = function (InspectioSrcPath, NegativeSrcPath) {
     let table = obj.body;
     for (let r of table) {
       let p = parseInt(r["検査実施_件数"]);
-      key = moment(r["実施_年月日"]).format("YYYY/MM/DD");
+      key = moment(r["実施_年月日"], "YYYY/M/D").format("YYYY/MM/DD");
     if (isNaN(p)) {
         p = 0;
       }
@@ -362,7 +403,7 @@ const genInspectorSummary2 = function (InspectioSrcPath, NegativeSrcPath) {
     let table = obj.body;
     for (let r of table) {
       let p = parseInt(r["陰性確認_件数"]);
-      key = moment(r["完了_年月日"]).format("YYYY/MM/DD");
+      key = moment(r["完了_年月日"], "YYYY/M/D").format("YYYY/MM/DD");
       if (isNaN(p)) {
         p = 0;
       }
