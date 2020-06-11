@@ -477,15 +477,13 @@ const getInspectionBreakdown = function (InspectionBreakdownPath) {
   }
 
   return {
-    inspection_breakdown: {
-      date:updateDate,
+      last_update:updateDate.format("YYYY/MM/DD HH:mm"), //"2020/04/17 21:00",
       data: {
         帰国者接触者外来等検査件数: attachman,
         ＰＣＲ検査センター検査件数: pcrcenter,
       },
       labels: labels,
-    },
-  };
+    };
 };
 
 const main = async function () {
