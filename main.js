@@ -5,8 +5,8 @@ const { JSDOM } = require("jsdom");
 const request = require("request-promise");
 //const moment = require("moment");
 //require('moment-timezone');
-const moment = require('moment-timezone');
-moment.tz.setDefault('Asia/Tokyo');
+const moment = require("moment-timezone");
+moment.tz.setDefault("Asia/Tokyo");
 const Parser = require("rss-parser");
 
 patientsSite =
@@ -17,6 +17,8 @@ hotlineSite =
   "https://ckan.open-governmentdata.org/dataset/401005_kitakyushu_covid19_call_center";
 negatibSite =
   "https://ckan.open-governmentdata.org/dataset/401005_kitakyushu_covid19_confirm_negative";
+inspectBreakdownSite =
+  "https://ckan.open-governmentdata.org/dataset/401005_kitakyushu_covid19_test_count_breakdown";
 //kikokusyasessyokusyaSite =
 //  "https://ckan.open-governmentdata.org/dataset/401307_covid19_kikokusyasessyokusya";
 //totalparsonsSite =
@@ -27,9 +29,11 @@ const data1 = "patients.json";
 const data2 = "test_count.json";
 const data3 = "call_center.json";
 const data4 = "confirm_negative.json";
+const data5 = "test_count_breakdown.json";
 //const data5 = "data500.json";
 const resultPath = "data.json";
 const inspectResultPath = "inspections_summary.json";
+const inspectBreakdownPath = "inspections_breakdown.json";
 //const newsResultPath = "news.json";
 
 const dateFrom = new moment("2020-01-24");
@@ -46,7 +50,7 @@ const escDate = (dateStr) => {
   csvData:"",//json
 }
 */
-const getCsv = async function (url, filePath) {
+const getCsv = async function (url, filePath, charSet = "Shift_JIS") {
   result = {};
   const dlSite = await request(url);
   //const dlSite = iconv.decode(dlRaw,"Shift_JIS")
@@ -76,7 +80,7 @@ const getCsv = async function (url, filePath) {
   const csvUrl = dom.window.document.querySelector(".resource-url-analytics")
     .href;
   const csvRow = await request({ uri: csvUrl, encoding: null });
-  const csvBody = iconv.decode(csvRow, "Shift_JIS");
+  const csvBody = iconv.decode(csvRow, charSet);
   const dataBody = await csv().fromString(csvBody);
   result["body"] = dataBody;
   fs.writeFileSync(filePath, JSON.stringify(result, null, 2));
@@ -85,7 +89,7 @@ const getCsv = async function (url, filePath) {
 const genContacts = function (srcPath) {
   let data = fs.readFileSync(srcPath);
   let obj = JSON.parse(data);
-  let updateDate = moment()//moment(obj["最終更新"]);
+  let updateDate = moment(); //moment(obj["最終更新"]);
   let latestDate;
   let table = obj.body;
   let dailylist = {};
@@ -101,12 +105,15 @@ const genContacts = function (srcPath) {
   datas = [];
   for (
     var target = dateFrom.clone();
-    target.isBefore(moment(latestDate, "YYYY/MM/DD").add(1,"days"));
+    target.isBefore(moment(latestDate, "YYYY/MM/DD").add(1, "days"));
     target.add(1, "days")
   ) {
     let key = target.format("YYYY/MM/DD");
     let val = dailylist[key] || 0;
-    datas.push({ 日付: moment(key, "YYYY/MM/DD").tz("Asia/Tokyo").add(9,"h").format(), 小計: val });
+    datas.push({
+      日付: moment(key, "YYYY/MM/DD").tz("Asia/Tokyo").add(9, "h").format(),
+      小計: val,
+    });
   }
   return {
     contacts: {
@@ -137,14 +144,14 @@ const genQuerents = function (srcPath) {
 const genPatients = function (srcPath) {
   let data = fs.readFileSync(srcPath);
   let obj = JSON.parse(data);
-  let updateDate = moment();//moment(obj["最終更新"]);
+  let updateDate = moment(); //moment(obj["最終更新"]);
   let table = obj.body;
   let datas = [];
   for (let r of table) {
     let date = moment(r["公表_年月日"]);
     let d = {
       リリース日: date.toISOString(), //"2020-04-15T00:04:00.000Z",
-      居住地: r["患者_居住地"].replace("福岡県北九州市",''),
+      居住地: r["患者_居住地"].replace("福岡県北九州市", ""),
       年代: r["患者_年代"],
       性別: r["患者_性別"],
       退院: r["患者_退院済フラグ"] == "1" ? "○" : "",
@@ -176,7 +183,7 @@ const genPatientsSummary = function (srcPath) {
   let datas = [];
   for (
     var target = dateFrom.clone();
-    target.isBefore(moment().subtract(1,'d'));
+    target.isBefore(moment().subtract(1, "d"));
     target.add(1, "days")
   ) {
     datas.push({
@@ -389,7 +396,7 @@ const genInspectorSummary2 = function (InspectioSrcPath, NegativeSrcPath) {
     for (let r of table) {
       let p = parseInt(r["検査実施_件数"]);
       key = moment(r["実施_年月日"], "YYYY/M/D").format("YYYY/MM/DD");
-    if (isNaN(p)) {
+      if (isNaN(p)) {
         p = 0;
       }
       insList[key] = p;
@@ -415,11 +422,11 @@ const genInspectorSummary2 = function (InspectioSrcPath, NegativeSrcPath) {
   let il = [];
   let pl = [];
   let labels = [];
-  let dn = moment();//negUpdate > insUpdate ? negUpdate : insUpdate;
+  let dn = moment(); //negUpdate > insUpdate ? negUpdate : insUpdate;
   let newestKey = negKey > insKey ? negKey : insKey;
   for (
     var target = dateFrom.clone();
-    target.isBefore(moment(newestKey, "YYYY/MM/DD").add(1,"days"));
+    target.isBefore(moment(newestKey, "YYYY/MM/DD").add(1, "days"));
     target.add(1, "days")
   ) {
     let key = target.format("YYYY/MM/DD");
@@ -448,11 +455,45 @@ const genInspectorSummary2 = function (InspectioSrcPath, NegativeSrcPath) {
   };
 };
 
+const getInspectionBreakdown = function (InspectionBreakdownPath) {
+  let labels = [];
+  let attachman = [];
+  let pcrcenter = [];
+  let updateDate = moment(); //moment(obj["最終更新"]);
+  let data = fs.readFileSync(InspectionBreakdownPath);
+  let obj = JSON.parse(data);
+  negUpdate = moment(obj["最終更新"]);
+  let table = obj.body;
+  for (let r of table) {
+    let p = parseInt(r["検査内訳_帰国者・接触者外来等"]);
+    let q = parseInt(r["検査内訳_ＰＣＲ検査センター"]);
+    key = moment(r["実施_年月日"], "YYYY/M/D").format("M/D");
+    if (isNaN(p)) {
+      p = 0;
+    }
+    attachman.push(p);
+    pcrcenter.push(q);
+    labels.push(key);
+  }
+
+  return {
+    inspection_breakdown: {
+      date:updateDate,
+      data: {
+        帰国者接触者外来等検査件数: attachman,
+        ＰＣＲ検査センター検査件数: pcrcenter,
+      },
+      labels: labels,
+    },
+  };
+};
+
 const main = async function () {
   await getCsv(patientsSite, data1);
   await getCsv(screendSite, data2);
   await getCsv(hotlineSite, data3);
   await getCsv(negatibSite, data4);
+  await getCsv(inspectBreakdownSite, data5,"UTF-8");
 
   //await getCsv(kikokusyasessyokusyaSite,data4);
   //await getCsv(totalparsonsSite,data5);
@@ -466,9 +507,11 @@ const main = async function () {
     ...genInspectionsSummary(data2),
     ...genInspectionPersons(data2),
     ...genMainSummary(data1, data2),
+    ...getInspectionBreakdown(data5),
   };
 
   const res2 = genInspectorSummary2(data2, data4);
+  const res3 = getInspectionBreakdown(data5);
 
   fs.writeFileSync(
     resultPath,
@@ -479,7 +522,12 @@ const main = async function () {
     inspectResultPath,
     JSON.stringify(res2, null, 1).replace(/\//g, "\\/")
   );
-/*
+
+  fs.writeFileSync(
+    inspectBreakdownPath,
+    JSON.stringify(res3, null, 1).replace(/\//g, "\\/")
+  );
+  /*
   //get rss gen news.json
   let parser = new Parser();
   let news = [];
