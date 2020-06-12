@@ -491,7 +491,7 @@ const main = async function () {
   await getCsv(screendSite, data2);
   await getCsv(hotlineSite, data3);
   await getCsv(negatibSite, data4);
-  await getCsv(inspectBreakdownSite, data5,"UTF-8");
+  await getCsv(inspectBreakdownSite, data5);
 
   //await getCsv(kikokusyasessyokusyaSite,data4);
   //await getCsv(totalparsonsSite,data5);
