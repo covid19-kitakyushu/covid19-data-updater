@@ -1,47 +1,47 @@
-const iconv = require("iconv-lite");
-const fs = require("fs");
-const csv = require("csvtojson");
-const { JSDOM } = require("jsdom");
-const request = require("request-promise");
+const iconv = require('iconv-lite');
+const fs = require('fs');
+const csv = require('csvtojson');
+const { JSDOM } = require('jsdom');
+const request = require('request-promise');
 //const moment = require("moment");
 //require('moment-timezone');
-const moment = require("moment-timezone");
-moment.tz.setDefault("Asia/Tokyo");
-const Parser = require("rss-parser");
+const moment = require('moment-timezone');
+moment.tz.setDefault('Asia/Tokyo');
+const Parser = require('rss-parser');
 
 patientsSite =
-  "https://ckan.open-governmentdata.org/dataset/401005_kitakyushu_covid19_patients";
+  'https://ckan.open-governmentdata.org/dataset/401005_kitakyushu_covid19_patients';
 screendSite =
-  "https://ckan.open-governmentdata.org/dataset/401005_kitakyushu_covid19_test_count";
+  'https://ckan.open-governmentdata.org/dataset/401005_kitakyushu_covid19_test_count';
 hotlineSite =
-  "https://ckan.open-governmentdata.org/dataset/401005_kitakyushu_covid19_call_center";
+  'https://ckan.open-governmentdata.org/dataset/401005_kitakyushu_covid19_call_center';
 negatibSite =
-  "https://ckan.open-governmentdata.org/dataset/401005_kitakyushu_covid19_confirm_negative";
+  'https://ckan.open-governmentdata.org/dataset/401005_kitakyushu_covid19_confirm_negative';
 inspectBreakdownSite =
-  "https://ckan.open-governmentdata.org/dataset/401005_kitakyushu_covid19_test_count_breakdown";
+  'https://ckan.open-governmentdata.org/dataset/401005_kitakyushu_covid19_test_count_breakdown';
 //kikokusyasessyokusyaSite =
 //  "https://ckan.open-governmentdata.org/dataset/401307_covid19_kikokusyasessyokusya";
 //totalparsonsSite =
 //  "https://ckan.open-governmentdata.org/dataset/401307_covid19_totalpatients";
-newsRss = "https://www.city.kitakyushu.lg.jp/soumu/covid-19.rdf";
+newsRss = 'https://www.city.kitakyushu.lg.jp/soumu/covid-19.rdf';
 
-const data1 = "patients.json";
-const data2 = "test_count.json";
-const data3 = "call_center.json";
-const data4 = "confirm_negative.json";
-const data5 = "test_count_breakdown.json";
+const data1 = 'patients.json';
+const data2 = 'test_count.json';
+const data3 = 'call_center.json';
+const data4 = 'confirm_negative.json';
+const data5 = 'test_count_breakdown.json';
 //const data5 = "data500.json";
-const resultPath = "data.json";
-const inspectResultPath = "inspections_summary.json";
-const inspectBreakdownPath = "inspections_breakdown.json";
+const resultPath = 'data.json';
+const inspectResultPath = 'inspections_summary.json';
+const inspectBreakdownPath = 'inspections_breakdown.json';
 //const newsResultPath = "news.json";
 
-const dateFrom = new moment("2020-01-24");
+const dateFrom = new moment('2020-01-24');
 
 const sleep = (msec) => new Promise((resolve) => setTimeout(resolve, msec));
 
 const escDate = (dateStr) => {
-  return dateStr.replace(/\//g, "\\/");
+  return dateStr.replace(/\//g, '\\/');
 };
 
 /*
@@ -50,39 +50,39 @@ const escDate = (dateStr) => {
   csvData:"",//json
 }
 */
-const getCsv = async function (url, filePath, charSet = "Shift_JIS") {
+const getCsv = async function (url, filePath, charSet = 'Shift_JIS') {
   result = {};
   const dlSite = await request(url);
   //const dlSite = iconv.decode(dlRaw,"Shift_JIS")
   //console.log(dlSite);
   var dom = new JSDOM(dlSite);
-  const table = dom.window.document.querySelector("table");
+  const table = dom.window.document.querySelector('table');
   {
     table
-      .querySelector("tbody")
-      .querySelectorAll("tr")
+      .querySelector('tbody')
+      .querySelectorAll('tr')
       .forEach((elm) => {
-        const head = elm.querySelector("th").innerHTML;
-        let val = "";
-        if (head == "最終更新" || head == "作成日") {
+        const head = elm.querySelector('th').innerHTML;
+        let val = '';
+        if (head == '最終更新' || head == '作成日') {
           var a = elm
-            .querySelector("td")
-            .firstChild.nextSibling.getAttribute("data-datetime");
+            .querySelector('td')
+            .firstChild.nextSibling.getAttribute('data-datetime');
           val = a;
         } else {
-          var a = elm.querySelector("td");
+          var a = elm.querySelector('td');
           val = a.innerHTML;
         }
         result[head] = val;
       });
   }
 
-  const csvUrl = dom.window.document.querySelector(".resource-url-analytics")
+  const csvUrl = dom.window.document.querySelector('.resource-url-analytics')
     .href;
   const csvRow = await request({ uri: csvUrl, encoding: null });
   const csvBody = iconv.decode(csvRow, charSet);
   const dataBody = await csv().fromString(csvBody);
-  result["body"] = dataBody;
+  result['body'] = dataBody;
   fs.writeFileSync(filePath, JSON.stringify(result, null, 2));
 };
 
@@ -94,8 +94,8 @@ const genContacts = function (srcPath) {
   let table = obj.body;
   let dailylist = {};
   for (let r of table) {
-    let p = parseInt(r["相談件数"]);
-    key = moment(r["受付_年月日"], "YYYY/M/D").format("YYYY/MM/DD");
+    let p = parseInt(r['相談件数']);
+    key = moment(r['受付_年月日'], 'YYYY/M/D').format('YYYY/MM/DD');
     if (isNaN(p)) {
       p = 0;
     }
@@ -105,19 +105,19 @@ const genContacts = function (srcPath) {
   datas = [];
   for (
     var target = dateFrom.clone();
-    target.isBefore(moment(latestDate, "YYYY/MM/DD").add(1, "days"));
-    target.add(1, "days")
+    target.isBefore(moment(latestDate, 'YYYY/MM/DD').add(1, 'days'));
+    target.add(1, 'days')
   ) {
-    let key = target.format("YYYY/MM/DD");
+    let key = target.format('YYYY/MM/DD');
     let val = dailylist[key] || 0;
     datas.push({
-      日付: moment(key, "YYYY/MM/DD").tz("Asia/Tokyo").add(9, "h").format(),
+      日付: moment(key, 'YYYY/MM/DD').tz('Asia/Tokyo').add(9, 'h').format(),
       小計: val,
     });
   }
   return {
     contacts: {
-      date: updateDate.format("YYYY/MM/DD HH:mm"), //"2020/04/17 10:00",
+      date: updateDate.format('YYYY/MM/DD HH:mm'), //"2020/04/17 10:00",
       data: datas,
     },
   };
@@ -125,16 +125,16 @@ const genContacts = function (srcPath) {
 const genQuerents = function (srcPath) {
   return {
     querents: {
-      date: "2020/04/17 10:00",
+      date: '2020/04/17 10:00',
       data: [
         {
-          日付: "2020-01-27T00:00:00Z",
-          曜日: "月",
-          "9-17時": 39,
-          "17-翌9時": 0,
-          date: "2020-01-27",
+          日付: '2020-01-27T00:00:00Z',
+          曜日: '月',
+          '9-17時': 39,
+          '17-翌9時': 0,
+          date: '2020-01-27',
           w: 1,
-          short_date: "01/27",
+          short_date: '01/27',
           小計: 39,
         },
       ],
@@ -148,20 +148,20 @@ const genPatients = function (srcPath) {
   let table = obj.body;
   let datas = [];
   for (let r of table) {
-    let date = moment(r["公表_年月日"]);
+    let date = moment(r['公表_年月日'], 'YYYY/M/D');
     let d = {
       リリース日: date.toISOString(), //"2020-04-15T00:04:00.000Z",
-      居住地: r["患者_居住地"].replace("福岡県北九州市", ""),
-      年代: r["患者_年代"],
-      性別: r["患者_性別"],
-      退院: r["患者_退院済フラグ"] == "1" ? "○" : "",
-      date: date.format("YYYY-MM-DD"), //"2020-04-15",
+      居住地: r['患者_居住地'].replace('福岡県北九州市', ''),
+      年代: r['患者_年代'],
+      性別: r['患者_性別'],
+      退院: r['患者_退院済フラグ'] == '1' ? '○' : '',
+      date: date.format('YYYY-MM-DD'), //"2020-04-15",
     };
     datas.push(d);
   }
   return {
     patients: {
-      date: updateDate.format("YYYY/MM/DD HH:mm"), //"2020/04/17 21:00",
+      date: updateDate.format('YYYY/MM/DD HH:mm'), //"2020/04/17 21:00",
       data: datas,
     },
   };
@@ -173,7 +173,7 @@ const genPatientsSummary = function (srcPath) {
 
   let sum = {};
   for (let r of table) {
-    let date = moment(r["公表_年月日"]).format("YYYY-MM-DD");
+    let date = moment(r['公表_年月日'], 'YYYY/M/D').format('YYYY-MM-DD');
     if (!sum[date]) {
       sum[date] = 0;
     }
@@ -183,18 +183,18 @@ const genPatientsSummary = function (srcPath) {
   let datas = [];
   for (
     var target = dateFrom.clone();
-    target.isBefore(moment().subtract(1, "d"));
-    target.add(1, "days")
+    target.isBefore(moment().subtract(1, 'd'));
+    target.add(1, 'days')
   ) {
     datas.push({
       日付: target.toISOString(),
-      小計: sum[target.format("YYYY-MM-DD")] || 0,
+      小計: sum[target.format('YYYY-MM-DD')] || 0,
     });
   }
 
   return {
     patients_summary: {
-      date: moment().format("YYYY/MM/DD HH:mm"), //"2020/04/17 21:00",
+      date: moment().format('YYYY/MM/DD HH:mm'), //"2020/04/17 21:00",
       data: datas,
     },
   };
@@ -202,10 +202,10 @@ const genPatientsSummary = function (srcPath) {
 const genDischargesSummary = function (srcPath) {
   return {
     discharges_summary: {
-      date: "2020/04/17 21:00",
+      date: '2020/04/17 21:00',
       data: [
         {
-          日付: "2020-01-24T08:00:00.000Z",
+          日付: '2020-01-24T08:00:00.000Z',
           小計: 0,
         },
       ],
@@ -218,8 +218,8 @@ const genInspectionsSummary = function (srcPath) {
   let table = obj.body;
   let dailylist = {};
   for (let r of table) {
-    let p = parseInt(r["検査実施_件数"]);
-    key = moment(r["実施_年月日"], "YYYY/M/D").format("YYYY/MM/DD");
+    let p = parseInt(r['検査実施_件数']);
+    key = moment(r['実施_年月日'], 'YYYY/M/D').format('YYYY/MM/DD');
     if (isNaN(p)) {
       p = 0;
     }
@@ -231,17 +231,17 @@ const genInspectionsSummary = function (srcPath) {
   for (
     var target = dateFrom.clone();
     target.isBefore(moment.now());
-    target.add(1, "days")
+    target.add(1, 'days')
   ) {
-    let key = target.format("YYYY/MM/DD");
+    let key = target.format('YYYY/MM/DD');
     let val = dailylist[key] || 0;
-    labels.push(target.format("M/D"));
+    labels.push(target.format('M/D'));
     datas.push(val);
   }
 
   return {
     inspections_summary: {
-      date: moment().format("YYYY/MM/DD HH:mm"), //"2020/04/17 11:00",
+      date: moment().format('YYYY/MM/DD HH:mm'), //"2020/04/17 11:00",
       data: {
         市内: datas,
       },
@@ -256,11 +256,11 @@ const genInspectionPersons = function (srcPath) {
 
   return {
     inspections_persons: {
-      date: "2020/04/17 11:00",
+      date: '2020/04/17 11:00',
       data: {
         市内: [0],
       },
-      labels: ["1/24"],
+      labels: ['1/24'],
     },
   };
 };
@@ -271,7 +271,7 @@ const genMainSummary = function (patientSrcPath, InspectioSrcPath) {
     let obj = JSON.parse(data);
     let table = obj.body;
     for (r of table) {
-      insCnt += parseInt(r["検査実施_件数"]);
+      insCnt += parseInt(r['検査実施_件数']);
     }
   }
   let data = fs.readFileSync(patientSrcPath);
@@ -289,19 +289,19 @@ const genMainSummary = function (patientSrcPath, InspectioSrcPath) {
   let confirming = 0;
   let tbs = 0; //調整中
   for (const p of table) {
-    switch (p["患者_状態"]) {
-      case "入院中":
+    switch (p['患者_状態']) {
+      case '入院中':
         nyuuinn++;
-        switch (p["患者_症状"]) {
-          case "無症状":
+        switch (p['患者_症状']) {
+          case '無症状':
             mushojo++;
             break;
-          case "軽症":
-          case "中症":
+          case '軽症':
+          case '中症':
             keisyou++;
             break;
-          case "重症":
-          case "意識なし":
+          case '重症':
+          case '意識なし':
             juusyou++;
             break;
           default:
@@ -309,15 +309,15 @@ const genMainSummary = function (patientSrcPath, InspectioSrcPath) {
             break;
         }
         break;
-      case "自宅待機中":
-      case "入院先調整中":
+      case '自宅待機中':
+      case '入院先調整中':
         jitaku++;
         break;
-      case "退院":
-      case "健康観察終了":
+      case '退院':
+      case '健康観察終了':
         taiinn++;
         break;
-      case "死亡":
+      case '死亡':
         sibou++;
         break;
       default:
@@ -327,51 +327,51 @@ const genMainSummary = function (patientSrcPath, InspectioSrcPath) {
   }
 
   return {
-    lastUpdate: moment().format("YYYY/MM/DD HH:mm"), //"2020/04/17 11:00",
+    lastUpdate: moment().format('YYYY/MM/DD HH:mm'), //"2020/04/17 11:00",
     main_summary: {
-      attr: "検査実施人数",
+      attr: '検査実施人数',
       value: insCnt,
       children: [
         {
-          attr: "陽性患者数",
+          attr: '陽性患者数',
           value: posall,
           children: [
             {
-              attr: "入院中",
+              attr: '入院中',
               value: nyuuinn,
               children: [
                 {
-                  attr: "無症状",
+                  attr: '無症状',
                   value: mushojo,
                 },
                 {
-                  attr: "軽症・中等症",
+                  attr: '軽症・中等症',
                   value: keisyou,
                 },
                 {
-                  attr: "重症",
+                  attr: '重症',
                   value: juusyou,
                 },
                 {
-                  attr: "確認中",
+                  attr: '確認中',
                   value: confirming,
                 },
               ],
             },
             {
-              attr: "自宅療養",
+              attr: '自宅療養',
               value: jitaku,
             },
             {
-              attr: "調整中",
+              attr: '調整中',
               value: tbs,
             },
             {
-              attr: "死亡",
+              attr: '死亡',
               value: sibou,
             },
             {
-              attr: "退院",
+              attr: '退院',
               value: taiinn,
             },
           ],
@@ -391,11 +391,11 @@ const genInspectorSummary2 = function (InspectioSrcPath, NegativeSrcPath) {
   {
     let data = fs.readFileSync(InspectioSrcPath);
     let obj = JSON.parse(data);
-    insUpdate = moment(obj["最終更新"]);
+    insUpdate = moment(obj['最終更新']);
     let table = obj.body;
     for (let r of table) {
-      let p = parseInt(r["検査実施_件数"]);
-      key = moment(r["実施_年月日"], "YYYY/M/D").format("YYYY/MM/DD");
+      let p = parseInt(r['検査実施_件数']);
+      key = moment(r['実施_年月日'], 'YYYY/M/D').format('YYYY/MM/DD');
       if (isNaN(p)) {
         p = 0;
       }
@@ -406,11 +406,11 @@ const genInspectorSummary2 = function (InspectioSrcPath, NegativeSrcPath) {
   {
     let data = fs.readFileSync(NegativeSrcPath);
     let obj = JSON.parse(data);
-    negUpdate = moment(obj["最終更新"]);
+    negUpdate = moment(obj['最終更新']);
     let table = obj.body;
     for (let r of table) {
-      let p = parseInt(r["陰性確認_件数"]);
-      key = moment(r["完了_年月日"], "YYYY/M/D").format("YYYY/MM/DD");
+      let p = parseInt(r['陰性確認_件数']);
+      key = moment(r['完了_年月日'], 'YYYY/M/D').format('YYYY/MM/DD');
       if (isNaN(p)) {
         p = 0;
       }
@@ -426,10 +426,10 @@ const genInspectorSummary2 = function (InspectioSrcPath, NegativeSrcPath) {
   let newestKey = negKey > insKey ? negKey : insKey;
   for (
     var target = dateFrom.clone();
-    target.isBefore(moment(newestKey, "YYYY/MM/DD").add(1, "days"));
-    target.add(1, "days")
+    target.isBefore(moment(newestKey, 'YYYY/MM/DD').add(1, 'days'));
+    target.add(1, 'days')
   ) {
-    let key = target.format("YYYY/MM/DD");
+    let key = target.format('YYYY/MM/DD');
     try {
       let ii = insList[key] || 0;
       let ng = negList[key] || 0;
@@ -439,7 +439,7 @@ const genInspectorSummary2 = function (InspectioSrcPath, NegativeSrcPath) {
 
       il.push(ii);
       pl.push(ii - ng);
-      labels.push(target.format("M/D"));
+      labels.push(target.format('M/D'));
     } catch (e) {
       console.log(`failed:${key}`);
     }
@@ -451,7 +451,7 @@ const genInspectorSummary2 = function (InspectioSrcPath, NegativeSrcPath) {
       陽性確認: pl,
     },
     labels: labels,
-    last_update: dn.format("YYYY/MM/DD HH:mm"), //"2020/04/17 21:00",
+    last_update: dn.format('YYYY/MM/DD HH:mm'), //"2020/04/17 21:00",
   };
 };
 
@@ -462,12 +462,12 @@ const getInspectionBreakdown = function (InspectionBreakdownPath) {
   let updateDate = moment(); //moment(obj["最終更新"]);
   let data = fs.readFileSync(InspectionBreakdownPath);
   let obj = JSON.parse(data);
-  negUpdate = moment(obj["最終更新"]);
+  negUpdate = moment(obj['最終更新']);
   let table = obj.body;
   for (let r of table) {
-    let p = parseInt(r["検査内訳_帰国者・接触者外来等"]);
-    let q = parseInt(r["検査内訳_ＰＣＲ検査センター"]);
-    key = moment(r["実施_年月日"], "YYYY/M/D").format("M/D");
+    let p = parseInt(r['検査内訳_帰国者・接触者外来等']);
+    let q = parseInt(r['検査内訳_ＰＣＲ検査センター']);
+    key = moment(r['実施_年月日'], 'YYYY/M/D').format('M/D');
     if (isNaN(p)) {
       p = 0;
     }
@@ -477,16 +477,17 @@ const getInspectionBreakdown = function (InspectionBreakdownPath) {
   }
 
   return {
-      last_update:updateDate.format("YYYY/MM/DD HH:mm"), //"2020/04/17 21:00",
-      data: {
-        帰国者接触者外来等検査件数: attachman,
-        ＰＣＲ検査センター検査件数: pcrcenter,
-      },
-      labels: labels,
-    };
+    last_update: updateDate.format('YYYY/MM/DD HH:mm'), //"2020/04/17 21:00",
+    data: {
+      帰国者接触者外来等検査件数: attachman,
+      ＰＣＲ検査センター検査件数: pcrcenter,
+    },
+    labels: labels,
+  };
 };
 
-const main = async function () {
+//const main = async function () {
+async function main() {
   await getCsv(patientsSite, data1);
   await getCsv(screendSite, data2);
   await getCsv(hotlineSite, data3);
@@ -513,17 +514,17 @@ const main = async function () {
 
   fs.writeFileSync(
     resultPath,
-    JSON.stringify(res, null, 1).replace(/\//g, "\\/")
+    JSON.stringify(res, null, 1).replace(/\//g, '\\/')
   );
 
   fs.writeFileSync(
     inspectResultPath,
-    JSON.stringify(res2, null, 1).replace(/\//g, "\\/")
+    JSON.stringify(res2, null, 1).replace(/\//g, '\\/')
   );
 
   fs.writeFileSync(
     inspectBreakdownPath,
-    JSON.stringify(res3, null, 1).replace(/\//g, "\\/")
+    JSON.stringify(res3, null, 1).replace(/\//g, '\\/')
   );
   /*
   //get rss gen news.json
@@ -546,6 +547,9 @@ const main = async function () {
     JSON.stringify({ newsItems: news }, null, 1).replace(/\//g, "\\/")
   );
 */
-};
+}
 
-main();
+const t = async function () {
+  await main();
+};
+t();
