@@ -496,6 +496,7 @@ async function main() {
   await getCsv(hotlineSite, data3);
   await getCsv(negatibSite, data4);
   await getCsv(inspectBreakdownSite, data5);
+  await getCsv(privateInspectBreakdownSite, data6);
 
   //await getCsv(kikokusyasessyokusyaSite,data4);
   //await getCsv(totalparsonsSite,data5);
