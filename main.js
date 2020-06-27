@@ -19,6 +19,8 @@ negatibSite =
   'https://ckan.open-governmentdata.org/dataset/401005_kitakyushu_covid19_confirm_negative';
 inspectBreakdownSite =
   'https://ckan.open-governmentdata.org/dataset/401005_kitakyushu_covid19_test_count_breakdown';
+privateInspectBreakdownSite =
+  'https://ckan.open-governmentdata.org/dataset/401005_kitakyushu_covid19_test_count_privateinspection';
 //kikokusyasessyokusyaSite =
 //  "https://ckan.open-governmentdata.org/dataset/401307_covid19_kikokusyasessyokusya";
 //totalparsonsSite =
@@ -30,6 +32,7 @@ const data2 = 'test_count.json';
 const data3 = 'call_center.json';
 const data4 = 'confirm_negative.json';
 const data5 = 'test_count_breakdown.json';
+const data6 = 'private_test_count_breakdown.json';
 //const data5 = "data500.json";
 const resultPath = 'data.json';
 const inspectResultPath = 'inspections_summary.json';
