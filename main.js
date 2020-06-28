@@ -19,6 +19,8 @@ negatibSite =
   'https://ckan.open-governmentdata.org/dataset/401005_kitakyushu_covid19_confirm_negative';
 inspectBreakdownSite =
   'https://ckan.open-governmentdata.org/dataset/401005_kitakyushu_covid19_test_count_breakdown';
+privateInspectBreakdownSite =
+  'https://ckan.open-governmentdata.org/dataset/401005_kitakyushu_covid19_test_count_privateinspection';
 //kikokusyasessyokusyaSite =
 //  "https://ckan.open-governmentdata.org/dataset/401307_covid19_kikokusyasessyokusya";
 //totalparsonsSite =
@@ -30,6 +32,7 @@ const data2 = 'test_count.json';
 const data3 = 'call_center.json';
 const data4 = 'confirm_negative.json';
 const data5 = 'test_count_breakdown.json';
+const data6 = 'private_test_count_breakdown.json';
 //const data5 = "data500.json";
 const resultPath = 'data.json';
 const inspectResultPath = 'inspections_summary.json';
@@ -455,24 +458,33 @@ const genInspectorSummary2 = function (InspectioSrcPath, NegativeSrcPath) {
   };
 };
 
-const getInspectionBreakdown = function (InspectionBreakdownPath) {
+const getInspectionBreakdown = function (InspectionBreakdownPath,PrivateInspectionBreakdownPath) {
   let labels = [];
   let attachman = [];
   let pcrcenter = [];
+  let privateTest = [];
   let updateDate = moment(); //moment(obj["最終更新"]);
   let data = fs.readFileSync(InspectionBreakdownPath);
   let obj = JSON.parse(data);
+  let priData = fs.readFileSync(PrivateInspectionBreakdownPath);
+  let priObj = JSON.parse(priData);
+  let ptable=priObj.body;
+  //データが分かれているが、日付は1月30日からなので、配列の添え字でデータで突き合わせる
+  //データ一本化されたら修正
+  let ofs=0;
   negUpdate = moment(obj['最終更新']);
   let table = obj.body;
   for (let r of table) {
     let p = parseInt(r['検査内訳_帰国者・接触者外来等']);
     let q = parseInt(r['検査内訳_ＰＣＲ検査センター']);
+    let pr = parseInt(ptable[ofs++]['民間検査機関検査実施_件数']);
     key = moment(r['実施_年月日'], 'YYYY/M/D').format('M/D');
     if (isNaN(p)) {
       p = 0;
     }
     attachman.push(p);
     pcrcenter.push(q);
+    privateTest.push(pr);
     labels.push(key);
   }
 
@@ -481,6 +493,7 @@ const getInspectionBreakdown = function (InspectionBreakdownPath) {
     data: {
       帰国者接触者外来等検査件数: attachman,
       ＰＣＲ検査センター検査件数: pcrcenter,
+      民間検査機関検査件数:privateTest,
     },
     labels: labels,
   };
@@ -493,6 +506,7 @@ async function main() {
   await getCsv(hotlineSite, data3);
   await getCsv(negatibSite, data4);
   await getCsv(inspectBreakdownSite, data5);
+  await getCsv(privateInspectBreakdownSite, data6);
 
   //await getCsv(kikokusyasessyokusyaSite,data4);
   //await getCsv(totalparsonsSite,data5);
@@ -506,11 +520,10 @@ async function main() {
     ...genInspectionsSummary(data2),
     ...genInspectionPersons(data2),
     ...genMainSummary(data1, data2),
-    ...getInspectionBreakdown(data5),
   };
 
   const res2 = genInspectorSummary2(data2, data4);
-  const res3 = getInspectionBreakdown(data5);
+  const res3 = getInspectionBreakdown(data5,data6);
 
   fs.writeFileSync(
     resultPath,
