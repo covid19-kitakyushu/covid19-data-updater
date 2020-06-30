@@ -21,6 +21,8 @@ inspectBreakdownSite =
   'https://ckan.open-governmentdata.org/dataset/401005_kitakyushu_covid19_test_count_breakdown';
 privateInspectBreakdownSite =
   'https://ckan.open-governmentdata.org/dataset/401005_kitakyushu_covid19_test_count_privateinspection';
+symptomSite =
+  'https://ckan.open-governmentdata.org/dataset/401005_kitakyushu_covid19_patients_symptom';
 //kikokusyasessyokusyaSite =
 //  "https://ckan.open-governmentdata.org/dataset/401307_covid19_kikokusyasessyokusya";
 //totalparsonsSite =
@@ -33,6 +35,7 @@ const data3 = 'call_center.json';
 const data4 = 'confirm_negative.json';
 const data5 = 'test_count_breakdown.json';
 const data6 = 'private_test_count_breakdown.json';
+const data7 = 'simptom.json';
 //const data5 = "data500.json";
 const resultPath = 'data.json';
 const inspectResultPath = 'inspections_summary.json';
@@ -267,115 +270,68 @@ const genInspectionPersons = function (srcPath) {
     },
   };
 };
-const genMainSummary = function (patientSrcPath, InspectioSrcPath) {
+const genMainSummary = function (symptomPath) {
   let insCnt = 0;
-  {
-    let data = fs.readFileSync(InspectioSrcPath);
-    let obj = JSON.parse(data);
-    let table = obj.body;
-    for (r of table) {
-      insCnt += parseInt(r['検査実施_件数']);
-    }
-  }
-  let data = fs.readFileSync(patientSrcPath);
+  let data = fs.readFileSync(symptomPath);
   let obj = JSON.parse(data);
   let table = obj.body;
-
-  let posall = table.length;
-  let nyuuinn = 0;
-  let mushojo = 0;
-  let keisyou = 0;
-  let juusyou = 0;
-  let jitaku = 0;
-  let taiinn = 0;
-  let sibou = 0;
-  let confirming = 0;
-  let tbs = 0; //調整中
-  for (const p of table) {
-    switch (p['患者_状態']) {
-      case '入院中':
-        nyuuinn++;
-        switch (p['患者_症状']) {
-          case '無症状':
-            mushojo++;
-            break;
-          case '軽症':
-          case '中症':
-            keisyou++;
-            break;
-          case '重症':
-          case '意識なし':
-            juusyou++;
-            break;
-          default:
-            confirming++;
-            break;
-        }
-        break;
-      case '自宅待機中':
-      case '入院先調整中':
-        jitaku++;
-        break;
-      case '退院':
-      case '健康観察終了':
-        taiinn++;
-        break;
-      case '死亡':
-        sibou++;
-        break;
-      default:
-        tbs++;
-        break;
-    }
+  for (r of table) {
+    insCnt += 1;
   }
+
+  let posall = r['陽性者数_累計'];
+  let nyuuinn = r['入院等'];
+  let mushojo = r['入院等・調整中内訳_無症状'];
+  let keisyou = r['入院等・調整中内訳_軽症・中等症'];
+  let juusyou = r['入院等・調整中内訳_重症'];
+  let confirming = r['入院等・調整中内訳_確認中'];
+  let taiinn = r['退院'];
+  let sibou = r['死亡'];
+  let tbs = r['調整中'];
 
   return {
     lastUpdate: moment().format('YYYY/MM/DD HH:mm'), //"2020/04/17 11:00",
     main_summary: {
-      attr: '検査実施人数',
+      attr: 'データ行数',
       value: insCnt,
       children: [
         {
           attr: '陽性患者数',
-          value: posall,
+          value: parseInt(posall),
           children: [
             {
               attr: '入院中',
-              value: nyuuinn,
+              value: parseInt(nyuuinn),
               children: [
                 {
                   attr: '無症状',
-                  value: mushojo,
+                  value: parseInt(mushojo),
                 },
                 {
                   attr: '軽症・中等症',
-                  value: keisyou,
+                  value: parseInt(keisyou),
                 },
                 {
                   attr: '重症',
-                  value: juusyou,
+                  value: parseInt(juusyou),
                 },
                 {
                   attr: '確認中',
-                  value: confirming,
+                  value: parseInt(confirming),
                 },
               ],
             },
             {
-              attr: '自宅療養',
-              value: jitaku,
-            },
-            {
               attr: '調整中',
-              value: tbs,
+              value: parseInt(tbs),
             },
             {
               attr: '死亡',
-              value: sibou,
+              value: parseInt(sibou),
             },
             {
               attr: '退院',
-              value: taiinn,
+              value: parseInt(taiinn),
             },
           ],
         },
@@ -458,7 +414,10 @@ const genInspectorSummary2 = function (InspectioSrcPath, NegativeSrcPath) {
   };
 };
 
-const getInspectionBreakdown = function (InspectionBreakdownPath,PrivateInspectionBreakdownPath) {
+const getInspectionBreakdown = function (
+  InspectionBreakdownPath,
+  PrivateInspectionBreakdownPath
+) {
   let labels = [];
   let attachman = [];
   let pcrcenter = [];
@@ -468,10 +427,10 @@ const getInspectionBreakdown = function (InspectionBreakdownPath,PrivateInspecti
   let obj = JSON.parse(data);
   let priData = fs.readFileSync(PrivateInspectionBreakdownPath);
   let priObj = JSON.parse(priData);
-  let ptable=priObj.body;
+  let ptable = priObj.body;
   //データが分かれているが、日付は1月30日からなので、配列の添え字でデータで突き合わせる
   //データ一本化されたら修正
-  let ofs=0;
+  let ofs = 0;
   negUpdate = moment(obj['最終更新']);
   let table = obj.body;
   for (let r of table) {
@@ -493,11 +452,19 @@ const getInspectionBreakdown = function (InspectionBreakdownPath,PrivateInspecti
     data: {
       帰国者接触者外来等検査件数: attachman,
       ＰＣＲ検査センター検査件数: pcrcenter,
-      民間検査機関検査件数:privateTest,
+      民間検査機関検査件数: privateTest,
     },
     labels: labels,
   };
 };
+
+function waitTime(msec) {
+  return new Promise(function (resolve) {
+    setTimeout(function () {
+      resolve();
+    }, msec);
+  });
+}
 
 //const main = async function () {
 async function main() {
@@ -507,6 +474,7 @@ async function main() {
   await getCsv(negatibSite, data4);
   await getCsv(inspectBreakdownSite, data5);
   await getCsv(privateInspectBreakdownSite, data6);
+  await getCsv(symptomSite, data7);
 
   //await getCsv(kikokusyasessyokusyaSite,data4);
   //await getCsv(totalparsonsSite,data5);
@@ -519,11 +487,11 @@ async function main() {
     ...genDischargesSummary(data2),
     ...genInspectionsSummary(data2),
     ...genInspectionPersons(data2),
-    ...genMainSummary(data1, data2),
+    ...genMainSummary(data7),
   };
 
   const res2 = genInspectorSummary2(data2, data4);
-  const res3 = getInspectionBreakdown(data5,data6);
+  const res3 = getInspectionBreakdown(data5, data6);
 
   fs.writeFileSync(
     resultPath,
@@ -539,6 +507,9 @@ async function main() {
     inspectBreakdownPath,
     JSON.stringify(res3, null, 1).replace(/\//g, '\\/')
   );
+
+  await waitTime(30000); // 30秒ウェイト Actionsのエラー解決に効果がなければ消す
+
   /*
   //get rss gen news.json
   let parser = new Parser();
