@@ -104,6 +104,7 @@ const genContacts = function (srcPath) {
     key = moment(r['受付_年月日'], 'YYYY/M/D').format('YYYY/MM/DD');
     if (isNaN(p)) {
       p = 0;
+      break;
     }
     dailylist[key] = p;
     latestDate = key;
