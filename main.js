@@ -154,14 +154,20 @@ const genPatients = function (srcPath) {
   let updateDate = moment(); //moment(obj["最終更新"]);
   let table = obj.body;
   let datas = [];
+  let pre_date = moment();
   for (let r of table) {
     let date = moment(r['公表_年月日'], 'YYYY/M/D');
+    if (date.toISOString() === null) {
+      date = pre_date; // dateが異常な時、前行のdateを使う
+    } else {
+      pre_date = date;
+    }
     let d = {
       リリース日: date.toISOString(), //"2020-04-15T00:04:00.000Z",
       居住地: r['患者_居住地'].replace('福岡県北九州市', ''),
       年代: r['患者_年代'],
       性別: r['患者_性別'],
-      退院: r['患者_退院済フラグ'] == '1' ? '○' : '',
+      //  退院: r['患者_退院済フラグ'] == '1' ? '○' : '',  // 退院フラグが無くなっているので無駄データを作らない
       date: date.format('YYYY-MM-DD'), //"2020-04-15",
     };
     datas.push(d);
@@ -177,10 +183,17 @@ const genPatientsSummary = function (srcPath) {
   let data = fs.readFileSync(srcPath);
   let obj = JSON.parse(data);
   let table = obj.body;
-
+  let pre_date = moment();
   let sum = {};
   for (let r of table) {
-    let date = moment(r['公表_年月日'], 'YYYY/M/D').format('YYYY-MM-DD');
+    //    let date = moment(r['公表_年月日'], 'YYYY/M/D').format('YYYY-MM-DD');
+    let date = moment(r['公表_年月日'], 'YYYY/M/D');
+    if (date.toISOString() === null) {
+      date = pre_date; // dateが異常な時、前行のdateを使う
+    } else {
+      pre_date = date;
+    }
+    date = date.format('YYYY-MM-DD');
     if (!sum[date]) {
       sum[date] = 0;
     }
