@@ -412,7 +412,7 @@ const genInspectorSummary2 = function (InspectioSrcPath, NegativeSrcPath) {
 
       il.push(ii);
       pl.push(ii - ng);
-      labels.push(target.format('M/D'));
+      labels.push(target.format('YYYY/M/D'));
     } catch (e) {
       console.log(`failed:${key}`);
     }
@@ -451,7 +451,7 @@ const getInspectionBreakdown = function (
     let p = parseInt(r['検査内訳_帰国者・接触者外来等']);
     let q = parseInt(r['検査内訳_ＰＣＲ検査センター']);
     let pr = parseInt(ptable[ofs++]['民間検査機関検査実施_件数']);
-    key = moment(r['実施_年月日'], 'YYYY/M/D').format('M/D');
+    key = moment(r['実施_年月日'], 'YYYY/M/D').format('YYYY/M/D');
     if (isNaN(p)) {
       p = 0;
     }
