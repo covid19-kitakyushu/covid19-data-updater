@@ -27,6 +27,7 @@ symptomSite =
 //  "https://ckan.open-governmentdata.org/dataset/401307_covid19_kikokusyasessyokusya";
 //totalparsonsSite =
 //  "https://ckan.open-governmentdata.org/dataset/401307_covid19_totalpatients";
+injectionSite = 'https://ckan.open-governmentdata.org/dataset/401005_kitakyushu_covid19_injection';
 newsRss = 'https://www.city.kitakyushu.lg.jp/soumu/covid-19.rdf';
 
 const data1 = 'patients.json';
@@ -36,6 +37,8 @@ const data4 = 'confirm_negative.json';
 const data5 = 'test_count_breakdown.json';
 const data6 = 'private_test_count_breakdown.json';
 const data7 = 'simptom.json';
+const data8 = 'injection.json';
+
 //const data5 = "data500.json";
 const resultPath = 'data.json';
 const inspectResultPath = 'inspections_summary.json';
@@ -472,6 +475,38 @@ const getInspectionBreakdown = function (
   };
 };
 
+const getInjections = function (
+  injectionPath,
+) {
+  let labels = [];
+  let firsts = [];
+  let seconds = [];
+  let updateDate = moment(); 
+  let data = fs.readFileSync(injectionPath);
+  let obj = JSON.parse(data);
+
+  let table = obj.body;
+  for (let r of table) {
+    let p = '1回目接種完了' in r ? parseInt(r['1回目接種完了']): parseInt(r['１回目接種完了']); // 数字部分が全角or半角わからないため判定(統一されたら判定不要)
+    let q = '2回目接種完了' in r ? parseInt(r['2回目接種完了']): parseInt(r['２回目接種完了']);
+    key = moment(r['完了_年月日'], 'YYYY/M/D').format('YYYY/M/D');
+    firsts.push(p);
+    seconds.push(q);
+    labels.push(key);
+  }
+
+  return {
+    injection_persons: {
+      date: updateDate.format('YYYY/MM/DD HH:mm'),
+      data: {
+        "1回目接種完了": firsts,
+        "2回目接種完了": seconds,
+      },
+      labels: labels,
+    },
+  };
+};
+
 function waitTime(msec) {
   return new Promise(function (resolve) {
     setTimeout(function () {
@@ -489,6 +524,7 @@ async function main() {
   await getCsv(inspectBreakdownSite, data5);
   await getCsv(privateInspectBreakdownSite, data6);
   await getCsv(symptomSite, data7);
+  await getCsv(injectionSite, data8);
 
   //await getCsv(kikokusyasessyokusyaSite,data4);
   //await getCsv(totalparsonsSite,data5);
@@ -502,6 +538,7 @@ async function main() {
     ...genInspectionsSummary(data2),
     ...genInspectionPersons(data2),
     ...genMainSummary(data7),
+    ...getInjections(data8)
   };
 
   const res2 = genInspectorSummary2(data2, data4);
