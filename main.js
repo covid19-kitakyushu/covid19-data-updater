@@ -487,8 +487,8 @@ const getInjections = function (
 
   let table = obj.body;
   for (let r of table) {
-    let p = '1回目接種完了' in r ? parseInt(r['1回目接種完了']): parseInt(r['１回目接種完了']); // 数字部分が全角or半角わからないため判定(統一されたら判定不要)
-    let q = '2回目接種完了' in r ? parseInt(r['2回目接種完了']): parseInt(r['２回目接種完了']);
+    let p = parseInt(r['1回目接種完了']);
+    let q = parseInt(r['2回目接種完了']);
     key = moment(r['完了_年月日'], 'YYYY/M/D').format('YYYY/M/D');
     firsts.push(p);
     seconds.push(q);
