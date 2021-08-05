@@ -487,9 +487,18 @@ const getInjections = function (
 
   let table = obj.body;
   for (let r of table) {
-    let p = parseInt(r['1回目接種完了']);
-    let q = parseInt(r['2回目接種完了']);
+    if (r['完了_年月日'] === null || r['完了_年月日'] === "") {
+      break;
+    }
     key = moment(r['完了_年月日'], 'YYYY/M/D').format('YYYY/M/D');
+    let p = parseInt(r['1回目接種完了']);
+    if (isNaN(p)) {
+      p = 0;
+    }
+    let q = parseInt(r['2回目接種完了']);
+    if (isNaN(q)) {
+      q = 0;
+    }
     firsts.push(p);
     seconds.push(q);
     labels.push(key);
