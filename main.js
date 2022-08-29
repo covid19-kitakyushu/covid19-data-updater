@@ -8,6 +8,7 @@ const request = require('request-promise');
 const moment = require('moment-timezone');
 moment.tz.setDefault('Asia/Tokyo');
 const Parser = require('rss-parser');
+const { DefaultDeserializer } = require('v8');
 
 patientsSite =
   'https://ckan.open-governmentdata.org/dataset/401005_kitakyushu_covid19_patients';
@@ -45,7 +46,8 @@ const inspectResultPath = 'inspections_summary.json';
 const inspectBreakdownPath = 'inspections_breakdown.json';
 //const newsResultPath = "news.json";
 
-const dateFrom = new moment('2020-01-24');
+
+const dateFrom = new moment('2022-07-24'); //2020-01-24
 
 const sleep = (msec) => new Promise((resolve) => setTimeout(resolve, msec));
 
@@ -53,6 +55,7 @@ const escDate = (dateStr) => {
   return dateStr.replace(/\//g, '\\/');
 };
 
+let last_patient_date;
 /*
 {
   updateDate:"",
@@ -157,14 +160,13 @@ const genPatients = function (srcPath) {
   let updateDate = moment(); //moment(obj["最終更新"]);
   let table = obj.body;
   let datas = [];
-  let pre_date = moment();
+
+  lastdate = moment(last_patient_date, 'YYYY/M/D');
   for (let r of table) {
     let date = moment(r['公表_年月日'], 'YYYY/M/D');
-    if (date.toISOString() === null) {
-      date = pre_date; // dateが異常な時、前行のdateを使う
-    } else {
-      pre_date = date;
-    }
+    // 患者数が15万人を超え、データ削減のため患者確認の最終日に限定する
+    if (!date.isSame(lastdate))
+      continue;
     let d = {
       リリース日: date.toISOString(), //"2020-04-15T00:04:00.000Z",
       居住地: r['患者_居住地'].replace('福岡県北九州市', ''),
@@ -201,6 +203,8 @@ const genPatientsSummary = function (srcPath) {
       sum[date] = 0;
     }
     sum[date]++;
+    if (sum[date] >= 1)
+      last_patient_date = date;
   }
 
   let datas = [];
@@ -454,7 +458,11 @@ const getInspectionBreakdown = function (
     let p = parseInt(r['検査内訳_帰国者・接触者外来等']);
     let q = parseInt(r['検査内訳_ＰＣＲ検査センター']);
     let pr = parseInt(ptable[ofs++]['民間検査機関検査実施_件数']);
-    key = moment(r['実施_年月日'], 'YYYY/M/D').format('YYYY/M/D');
+    keym = moment(r['実施_年月日'], 'YYYY/M/D');
+    //console.error(keym, dateFrom);
+    if (keym.isBefore(dateFrom))
+      continue;
+    key = keym.format('YYYY/M/D');
     if (isNaN(p)) {
       p = 0;
     }
@@ -541,8 +549,8 @@ async function main() {
   const res = {
     ...genContacts(data3),
     ...genQuerents(data4),
-    ...genPatients(data1),
     ...genPatientsSummary(data1),
+    ...genPatients(data1),
     ...genDischargesSummary(data2),
     ...genInspectionsSummary(data2),
     ...genInspectionPersons(data2),
@@ -568,7 +576,7 @@ async function main() {
     JSON.stringify(res3, null, 1).replace(/\//g, '\\/')
   );
 
-  await waitTime(30000); // 30秒ウェイト Actionsのエラー解決に効果がなければ消す
+//  await waitTime(30000); // 30秒ウェイト Actionsのエラー解決に効果がなければ消す
 
   /*
   //get rss gen news.json
