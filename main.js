@@ -47,14 +47,16 @@ const inspectBreakdownPath = 'inspections_breakdown.json';
 //const newsResultPath = "news.json";
 
 
-const dateFrom = new moment('2020-01-24'); //2020-01-24
+const dateFrom = new moment('2022-07-24'); //2020-01-24
 
 const sleep = (msec) => new Promise((resolve) => setTimeout(resolve, msec));
 
 const escDate = (dateStr) => {
   return dateStr.replace(/\//g, '\\/');
 };
-
+// 属性データ数が以下を超える日まで遡って「陽性患者の属性」表のデータを作る
+// 1日で超える場合は、1日分のデータを作る
+const number_of_attributes = 1000;
 let last_patient_date;
 /*
 {
@@ -161,11 +163,11 @@ const genPatients = function (srcPath) {
   let table = obj.body;
   let datas = [];
 
-  lastdate = moment(last_patient_date, 'YYYY/M/D');
+  lastdate = moment(last_patient_date, 'YYYY/M/D').subtract(1, 'days');
   for (let r of table) {
     let date = moment(r['公表_年月日'], 'YYYY/M/D');
-    // 患者数が15万人を超え、データ削減のため患者確認の最終日に限定する
-    if (!date.isSame(lastdate))
+    // 患者数が15万人を超え、データ削減のため、陽性患者の属性表の数を制限する
+    if (date.isBefore(lastdate))
       continue;
     let d = {
       リリース日: date.toISOString(), //"2020-04-15T00:04:00.000Z",
@@ -203,8 +205,6 @@ const genPatientsSummary = function (srcPath) {
       sum[date] = 0;
     }
     sum[date]++;
-    if (sum[date] >= 1)
-      last_patient_date = date;
   }
 
   let datas = [];
@@ -217,6 +217,21 @@ const genPatientsSummary = function (srcPath) {
       日付: target.toISOString(),
       小計: sum[target.format('YYYY-MM-DD')] || 0,
     });
+  }
+
+  // 所定の陽性患者数を超える日まで遡って last_patient_date を設定する
+  let ptsum = 0;
+  last_patient_date = moment().subtract(1, 'd');
+  for (
+    var target = moment().subtract(1, 'd');
+    target.isAfter(dateFrom);
+    target.subtract(1, 'days')
+  ) {
+    ptsum += sum[target.format('YYYY-MM-DD')];
+    if (ptsum > number_of_attributes) {
+      last_patient_date = target;
+      break;
+    }
   }
 
   return {
