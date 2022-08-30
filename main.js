@@ -47,7 +47,7 @@ const inspectBreakdownPath = 'inspections_breakdown.json';
 //const newsResultPath = "news.json";
 
 
-const dateFrom = new moment('2020-01-24'); //2020-01-24
+const dateFrom = new moment('2020-01-24');  //2020-01-24
 
 const sleep = (msec) => new Promise((resolve) => setTimeout(resolve, msec));
 
