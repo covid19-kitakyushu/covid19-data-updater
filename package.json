@@ -10,7 +10,7 @@
     "iconv-lite": "^0.5.1",
     "jsdom": "^16.5.0",
     "moment": "^2.29.4",
-    "moment-timezone": "^0.5.27",
+    "moment-timezone": "^0.5.35",
     "promise": "^8.1.0",
     "request": "^2.88.2",
     "request-promise": "^4.2.5",
