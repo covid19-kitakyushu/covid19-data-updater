@@ -192,6 +192,7 @@ const genPatientsSummary = function (srcPath) {
   let table = obj.body;
   let pre_date = moment();
   let sum = {};
+  let last_counted_date;
   for (let r of table) {
     //    let date = moment(r['公表_年月日'], 'YYYY/M/D').format('YYYY-MM-DD');
     let date = moment(r['公表_年月日'], 'YYYY/M/D');
@@ -205,12 +206,13 @@ const genPatientsSummary = function (srcPath) {
       sum[date] = 0;
     }
     sum[date]++;
+    last_counted_date = date;
   }
 
   let datas = [];
   for (
     var target = dateFrom.clone();
-    target.isBefore(moment().subtract(1, 'd'));
+    target.isSameOrBefore(last_counted_date);
     target.add(1, 'days')
   ) {
     datas.push({
@@ -221,9 +223,9 @@ const genPatientsSummary = function (srcPath) {
 
   // 所定の陽性患者数を超える日まで遡って last_patient_date を設定する
   let ptsum = 0;
-  last_patient_date = moment().subtract(1, 'd');
+  last_patient_date = moment(last_counted_date);
   for (
-    var target = moment().subtract(1, 'd');
+    var target = moment(last_counted_date);
     target.isAfter(dateFrom);
     target.subtract(1, 'days')
   ) {
